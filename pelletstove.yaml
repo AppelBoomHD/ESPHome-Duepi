@@ -14,9 +14,10 @@ esphome:
             id(exh_fan_speed).publish_state(0);
             id(burner_status).publish_state("All OK, startup");
             id(Stove).target_temperature = 21.0;
+            id(target_temperature).publish_state(30.0);
 
 esp8266:
-  board: d1
+  board: d1_mini
 
 # Enable logging
 logger:
@@ -69,19 +70,17 @@ api:
 
 ota:
   - platform: esphome
-    password: "CreateYourOwn"
+    password: !secret ota_key
 
 wifi:
   networks:
     - ssid: !secret wifi_ssid
       password: !secret wifi_password
-    - ssid: !secret wifi_ssid1
-      password: !secret wifi_password1
     
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Pelletkachel Fallback Hotspot"
-    password: "Pelletkachel"
+    password: !secret pelletkachel_api_password
 
 captive_portal:
 
@@ -132,7 +131,7 @@ sensor:
     filters:
       - round: 0
   - platform: template
-    name: "Room Temperature"
+    name: "current temperature"
     id: room_temp_stove
     unit_of_measurement: "°C"
     device_class: "temperature"
@@ -143,6 +142,15 @@ sensor:
           send_every: 15
           send_first_at: 1  
       - round: 2
+  - platform: template
+    name: "internal target temperature"
+    id: target_temperature
+    unit_of_measurement: "°C"
+    device_class: "temperature"
+    accuracy_decimals: 0
+  - platform: homeassistant
+    id: current_temperature
+    entity_id: sensor.woonkamer_temperatuur
       
 switch:
   - platform: template
@@ -167,40 +175,18 @@ climate:
   - platform: thermostat
     name: "Pellet kachel"
     id: Stove
-    sensor: room_temp_stove
+    sensor: current_temperature
     min_idle_time: 1s
     min_heating_off_time: 1s
     min_heating_run_time: 300s
     min_fan_mode_switching_time: 1s
-    heat_action: 
+    heat_action:
         - lambda: id(debug).publish_state("Thermostat heat action");
-    idle_action:
-        - lambda: id(debug).publish_state("Thermostat idle action");
-    target_temperature_change_action: 
-    # SET_TEMPERATURE 
         - wait_until:
             condition:
               lambda: 'return (id(uart_send) == 0);'
-            timeout: 1s
-        - script.execute:         
-            id: UART_CMD
-            command_in: !lambda |-
-              std::string str;
-              int temp;
-              temp=id(Stove).target_temperature;
-              if (temp<12 || temp>30) {
-                id(debug).publish_state("Temperature out of range (12-30). Set  to 21");
-                temp=21;
-              } 
-              str=str_sprintf("%X", temp); 
-              if (str.length()==1) {
-                str="F20" + str;
-              } else{
-                str="F2" + str;
-              }
-              id(uart_send) = 9;
-              return str;
-        - script.wait: UART_CMD 
+            timeout: 10s
+        - uart.write: "\x1bRF21E070&"
         - wait_until:
             condition:
               lambda: 'return (id(uart_send) == 0);'
@@ -209,7 +195,25 @@ climate:
             condition:
               lambda: 'return (id(debug).state != "OK");'
             then:
-              - lambda: id(debug).publish_state("Stove temp change failed");
+              - lambda: id(debug).publish_state("Thermostat heat action failed");
+    idle_action:
+        - lambda: id(debug).publish_state("Thermostat idle action");
+        - wait_until:
+            condition:
+              lambda: 'return (id(uart_send) == 0);'
+            timeout: 10s
+        - uart.write: "\x1bRF20C06D&"
+        - wait_until:
+            condition:
+              lambda: 'return (id(uart_send) == 0);'
+            timeout: 100ms
+        - if: 
+            condition:
+              lambda: 'return (id(debug).state != "OK");'
+            then:
+              - lambda: id(debug).publish_state("Thermostat idle action failed");
+    target_temperature_change_action: 
+        - lambda: id(debug).publish_state("Thermostat change target temperature action");
     fan_mode_quiet_action:    
       then:
         - lambda: id(fan_mode) = 1;
@@ -234,7 +238,7 @@ climate:
         - lambda: |-
             id(debug).publish_state("Heat On");
             id(uart_send) = 9;
-        - uart.write: "\x1bRF00605E&" #On auto
+        - uart.write: "\x1bRF001059&"
         - wait_until:
             condition:
               lambda: 'return (id(uart_send) == 0);'
@@ -267,7 +271,7 @@ climate:
       min_temperature: 12
       max_temperature: 30
       temperature_step:
-        target_temperature: 1.0
+        target_temperature: 0.1
         current_temperature: 0.1
 
 # constants nog ongebruikt
@@ -443,11 +447,7 @@ uart:
                 }
                 case 8: {
                   int temp = std::stoi(data_from_server.substr(1, 4), nullptr, 16);
-                  if (temp>11 && temp <31) {
-                    id(Stove).target_temperature = temp;
-                  } else {
-                    id(debug).publish_state("Error temperature out of range (12-30C) :"+temp);
-                  }
+                  id(target_temperature).publish_state(temp);
                   id(uart_send) = 0;                  
                   break;
                 }
@@ -513,6 +513,7 @@ time:
                       - script.execute:         
                           id: UART_CMD
                           command_in: !lambda |-
+                            id(debug).publish_state("Changing fan mode");
                             id(uart_send) = 9;
                             id(pellet_speed).publish_state(id(fan_mode));
                             std::string str;
