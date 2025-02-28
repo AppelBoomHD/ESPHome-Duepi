@@ -61,7 +61,7 @@ api:
         - lambda: id(uart_send) = 10;
         - script.execute:         
             id: UART_CMD
-            command_in: !lambda return command;        
+            command_in: !lambda return command;
         - script.wait: UART_CMD
         - wait_until:
             condition:
@@ -93,6 +93,10 @@ globals:
      type: int
      restore_value: no
      initial_value: '1'
+   - id: heat_mode
+     type: bool
+     restore_value: no
+     initial_value: 'false' # false is idle, true is heat
 
 sensor:
   - platform: template
@@ -183,37 +187,11 @@ climate:
     heat_deadband: 0.1
     heat_overrun: 0.1
     heat_action:
-        - lambda: id(debug).publish_state("Thermostat heat action");
-        - wait_until:
-            condition:
-              lambda: 'return (id(uart_send) == 0);'
-            timeout: 10s
-        - uart.write: "\x1bRF21E070&"
-        - wait_until:
-            condition:
-              lambda: 'return (id(uart_send) == 0);'
-            timeout: 100ms
-        - if: 
-            condition:
-              lambda: 'return (id(debug).state != "OK");'
-            then:
-              - lambda: id(debug).publish_state("Thermostat heat action failed");
+      then:
+        - lambda: id(heat_mode) = true;
     idle_action:
-        - lambda: id(debug).publish_state("Thermostat idle action");
-        - wait_until:
-            condition:
-              lambda: 'return (id(uart_send) == 0);'
-            timeout: 10s
-        - uart.write: "\x1bRF20C06D&"
-        - wait_until:
-            condition:
-              lambda: 'return (id(uart_send) == 0);'
-            timeout: 100ms
-        - if: 
-            condition:
-              lambda: 'return (id(debug).state != "OK");'
-            then:
-              - lambda: id(debug).publish_state("Thermostat idle action failed");
+      then:
+        - lambda: id(heat_mode) = false;
     target_temperature_change_action: 
         - lambda: id(debug).publish_state("Thermostat change target temperature action");
     fan_mode_quiet_action:    
@@ -231,7 +209,7 @@ climate:
     fan_mode_high_action:
       then:
         - lambda: id(fan_mode) = 5;
-    heat_mode: 
+    heat_mode:
       then:
         - wait_until:
             condition:
@@ -564,6 +542,34 @@ time:
               condition:
                 lambda: 'return (id(uart_send) == 0);'
               timeout: 100ms
+          - if: 
+              condition:
+                lambda: 'return ((id(heat_mode) && id(target_temperature).state != 30) || (!id(heat_mode) && id(target_temperature).state != 12));' 
+              then:
+                - script.execute:         
+                    id: UART_CMD
+                    command_in: !lambda |-
+                      std::string str;
+                      int temp;
+                      temp=id(heat_mode) ? 30 : 12;
+                      str=str_sprintf("%X", temp); 
+                      if (str.length()==1) {
+                        str="F20" + str;
+                      } else{
+                        str="F2" + str;
+                      }
+                      id(uart_send) = 9;
+                      return str;
+                - script.wait: UART_CMD 
+                - wait_until:
+                    condition:
+                      lambda: 'return (id(uart_send) == 0);'
+                    timeout: 100ms
+                - if: 
+                    condition:
+                      lambda: 'return (id(debug).state != "OK");'
+                    then:
+                      - lambda: id(debug).publish_state("Heat mode change failed");  
 
 text_sensor:
   - platform: template
