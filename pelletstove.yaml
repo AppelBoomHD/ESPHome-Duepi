@@ -25,7 +25,7 @@ wifi:
 
 packages:
   remote_package_files:
-    url: https://github.com/mvroosmalen1970/ESPHome-Duepi.git
+    url: https://github.com/AppelBoomHD/ESPHome-Duepi.git
     files: [
       components/script.yaml, 
       components/globals.yaml, 
