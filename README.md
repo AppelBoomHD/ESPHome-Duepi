@@ -1,23 +1,37 @@
 :coffee: [Buy Me A Coffee](https://buymeacoffee.com/mvroosmalen)! :coffee:
 # ESPHome-Duepi
-The Duepi EVO climate platform is a reverse engineered implementation of the app which is controlling Pellet stove heaters using a Duepi Evo Wifi module. With this module it is possible to control your pellet stove with **HomeAssistant**. This is in no way associated with the company Duepi and comes with no guarantees or warranty. Use at your own risk. Optionally one can send a four character code to the stove to test out new commands (change pending)
-
+The Duepi EVO climate platform is a reverse engineered implementation of the app which is controlling Pellet stove heaters using a Duepi Evo Wifi module. With this module it is possible to control your pellet stove with **HomeAssistant** or **Homey**. This is in no way associated with the company Duepi and comes with no guarantees or warranty. Use at your own risk. Optionally one can send a four character code to the stove to test out new commands. <br />
 ![image](https://github.com/user-attachments/assets/37a8dd07-30b7-46e1-8ba0-1c56234960a2)
 ![Screenshot_2025-02-21_19-00-56](https://github.com/user-attachments/assets/50f06f76-f7b8-4078-a9bc-d7b59a99f2d2)
 
+## New:
+- moved all coding to seperate files so future updates are used directly when you flash ESPHome updates.
+- If you like to test an beta version change **ref: main** to **ref: mvroosmalen1970-patch-xx** in pelletstove.yaml (xx is the patch number) 
 
 ## Prerequisites
-- Hardware: Wemos D1 flashed with ESPHome. This device has a 5V input and integrated CH340 for easy flashing. 
+- Hardware: Wemos D1 flashed with **ESPHome**. This device has a 5V input and integrated CH340 for easy flashing.
+- ESPHome installed in **Homey** or **HomeAssistent**
+<br />
 
 ## Functionality
-- Control target temperature.
-- Control system on/off.
-- Control fan speed (quite, low, middel, medium, high)
-- Reset errors (ie out of pellet)
-- Automation possible
-- Send custom commands
+- Control target temperature (10-35°C). This can be modified. <br />
+- Control system on/off.<br />
+- Control fan speed (quite, low, middel, medium, high) <br />
+- Reset errors (ie out of pellet) <br />
+- Automation possible using any of the reported **Sensors** or **Controls**  <br />
+- Send custom commands and read its reponse in debug <br />
+- PCB temperature <br />
+- Full history of all **Sensors** or **Controls**  (ie temperature, fanspeed....) <br />
+- DUEPI firmware detected <br />
+- running time stove reported (total life time and after cleaning reset), helps to get an early warning before stove sends a signal (the three beeps on startup 😊) <br />
+<br />
 
 ### Configuration
+Install ESPHome in HomeAssistent or Homey using one of the links below: <br />
+https://homey.app/en-us/app/nl.inversion.esphome/ESPhome/ <br />
+https://my.home-assistant.io/redirect/config_flow_start?domain=esphome <br />
+<br />
+
 Paste **pelletstove.yaml** in ESPHome flashed device and <ins>change the underlined parts</ins>:  
 encryption:  
 ..key: <ins>!secret encryption_key</ins>  
@@ -43,26 +57,20 @@ rx_pin: GPIO-03
 GND-pin  
 5V-pin  
 
+If this sounds to complicated contact me for possibilies
+
 ### In Home assistent to activate custom commands for DUEPI stoves: 
   1) Create text helper <pelletkachel_command> (length 4 characters (min and max))
   2) Create automation: (with action select your esphome......write)      
         
-alias: send command to pellet kachel<br />
-description: "" <br />
-triggers:<br />
-  - trigger: state<br />
-    entity_id:<br />
-      - input_text.pelletkachel_command<br />
-conditions: []<br />
-actions:<br />
-  - action: esphome.**XXXXXXXXX**_write (**XXXXXXXX** = name of ESPHome yaml)<br />
-    data:<br />
-      command: "{{ states('input_text.pelletkachel_command') }}"<br />
-mode: single<br />
+![Image](https://github.com/user-attachments/assets/87e80384-265d-46bc-ab80-0f229b88fc11) <br />
+Note replace **pelletkachel** in action: esphome.**pelletkachel**_write with name of ESPHome yaml<br />
 
-Confirmed working with:  
-  Duroflame Rembrand  
-  Qlima Viola 85 S-Line
+## Confirmed working with:  
+- Artel watt 9
+- Duroflame Rembrand  
+- Qlima Viola 85 S-Line 
+
 
 
 Huge thanks goes to aceindy who found the solution for the HACS **HomeAssistant** integration, which I used to create this solution!
