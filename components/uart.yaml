@@ -181,8 +181,7 @@ uart:
                 }
                 case 8: {
                   int temp = std::stoi(data_from_server.substr(1, 4), nullptr, 16);
-                  if (temp>9 && temp <36) { id(Stove).target_temperature = temp; } 
-                  else { id(debug).publish_state("Error temperature out of range (10-35C) :"+temp); }
+                  id(target_temperature).publish_state(temp);
                   id(uart_send) = 0;                  
                   break;
                 }
