@@ -43,7 +43,7 @@ sensor:
     filters:
       - round: 0
   - platform: template
-    name: "Room Temperature"
+    name: "current temperature"
     id: room_temp_stove
     unit_of_measurement: "°C"
     device_class: "temperature"
@@ -62,3 +62,12 @@ sensor:
     accuracy_decimals: 0
     filters:
       - round: 0
+  - platform: template
+    name: "internal target temperature"
+    id: target_temperature
+    unit_of_measurement: "°C"
+    device_class: "temperature"
+    accuracy_decimals: 0
+  - platform: homeassistant
+    id: current_temperature
+    entity_id: sensor.woonkamer_temperatuur

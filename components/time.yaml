@@ -102,6 +102,34 @@ time:
               condition:
                 lambda: 'return (id(uart_send) == 0);'
               timeout: 100ms
+          - if: 
+              condition:
+                lambda: 'return ((id(heat_mode) && id(target_temperature).state != 30) || (!id(heat_mode) && id(target_temperature).state != 12));' 
+              then:
+                - script.execute:         
+                    id: UART_CMD
+                    command_in: !lambda |-
+                      std::string str;
+                      int temp;
+                      temp=id(heat_mode) ? 30 : 12;
+                      str=str_sprintf("%X", temp); 
+                      if (str.length()==1) {
+                        str="F20" + str;
+                      } else{
+                        str="F2" + str;
+                      }
+                      id(uart_send) = 9;
+                      return str;
+                - script.wait: UART_CMD 
+                - wait_until:
+                    condition:
+                      lambda: 'return (id(uart_send) == 0);'
+                    timeout: 100ms
+                - if: 
+                    condition:
+                      lambda: 'return (id(debug).state != "OK");'
+                    then:
+                      - lambda: id(debug).publish_state("Heat mode change failed");  
           - lambda: id(uart_send) = 11;
           - uart.write: "\x1bRDF0006C&" #GET_PCB_TEMP 
           - wait_until:

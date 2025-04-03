@@ -12,6 +12,7 @@ esphome:
             id(exh_fan_speed).publish_state(0);
             id(burner_status).publish_state("All OK, startup");
             id(Stove).target_temperature = 21.0;
+            id(target_temperature).publish_state(30.0);
 
 api:
   services:
@@ -52,3 +53,7 @@ globals:
      type: std::string
      restore_value: no
      initial_value: '"0000"'
+   - id: heat_mode
+     type: bool
+     restore_value: no
+     initial_value: 'false' # false is idle, true is heat
