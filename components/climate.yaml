@@ -20,18 +20,113 @@ climate:
     fan_mode_quiet_action:    
       then:
         - lambda: id(fan_mode) = 1;
+        - script.execute:         
+            id: UART_CMD
+            command_in: !lambda |-
+              id(uart_send) = 9;
+              std::string str;
+              int speed;
+              speed=id(fan_mode);
+              str="F00" + std::to_string(speed);
+              return str;
+        - script.wait: UART_CMD 
+        - wait_until:
+            condition:
+              lambda: 'return (id(uart_send) == 0);'
+            timeout: 100ms
+        - if: 
+            condition:
+              lambda: 'return (id(debug).state != "OK");'
+            then:
+              - lambda: id(debug).publish_state("Pelletspeed change failed");  
     fan_mode_low_action:
       then:
         - lambda: id(fan_mode) = 2;
+        - script.execute:         
+            id: UART_CMD
+            command_in: !lambda |-
+              id(uart_send) = 9;
+              std::string str;
+              int speed;
+              speed=id(fan_mode);
+              str="F00" + std::to_string(speed);
+              return str;
+        - script.wait: UART_CMD 
+        - wait_until:
+            condition:
+              lambda: 'return (id(uart_send) == 0);'
+            timeout: 100ms
+        - if: 
+            condition:
+              lambda: 'return (id(debug).state != "OK");'
+            then:
+              - lambda: id(debug).publish_state("Pelletspeed change failed");  
     fan_mode_middle_action:
       then:
         - lambda: id(fan_mode) = 3;
+        - script.execute:         
+            id: UART_CMD
+            command_in: !lambda |-
+              id(uart_send) = 9;
+              std::string str;
+              int speed;
+              speed=id(fan_mode);
+              str="F00" + std::to_string(speed);
+              return str;
+        - script.wait: UART_CMD 
+        - wait_until:
+            condition:
+              lambda: 'return (id(uart_send) == 0);'
+            timeout: 100ms
+        - if: 
+            condition:
+              lambda: 'return (id(debug).state != "OK");'
+            then:
+              - lambda: id(debug).publish_state("Pelletspeed change failed");  
     fan_mode_medium_action:
       then:
         - lambda: id(fan_mode) = 4;
+        - script.execute:         
+            id: UART_CMD
+            command_in: !lambda |-
+              id(uart_send) = 9;
+              std::string str;
+              int speed;
+              speed=id(fan_mode);
+              str="F00" + std::to_string(speed);
+              return str;
+        - script.wait: UART_CMD 
+        - wait_until:
+            condition:
+              lambda: 'return (id(uart_send) == 0);'
+            timeout: 100ms
+        - if: 
+            condition:
+              lambda: 'return (id(debug).state != "OK");'
+            then:
+              - lambda: id(debug).publish_state("Pelletspeed change failed");  
     fan_mode_high_action:
       then:
         - lambda: id(fan_mode) = 5;
+        - script.execute:         
+            id: UART_CMD
+            command_in: !lambda |-
+              id(uart_send) = 9;
+              std::string str;
+              int speed;
+              speed=id(fan_mode);
+              str="F00" + std::to_string(speed);
+              return str;
+        - script.wait: UART_CMD 
+        - wait_until:
+            condition:
+              lambda: 'return (id(uart_send) == 0);'
+            timeout: 100ms
+        - if: 
+            condition:
+              lambda: 'return (id(debug).state != "OK");'
+            then:
+              - lambda: id(debug).publish_state("Pelletspeed change failed");  
     heat_mode: 
       then:
         - wait_until:

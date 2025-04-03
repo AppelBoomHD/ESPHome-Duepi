@@ -47,32 +47,8 @@ time:
                     condition:
                       lambda: 'return (id(uart_send) == 1);'
                     timeout: 100ms
-                - if: 
-                    condition:
-                      lambda: 'return (id(pellet_speed).state != id(fan_mode) && id(burner_status).state != "Off" && id(burner_status).state != "Cooling down");' 
-                    then:
-                      - script.execute:         
-                          id: UART_CMD
-                          command_in: !lambda |-
-                            id(uart_send) = 9;
-                            std::string str;
-                            int speed;
-                            speed=id(fan_mode);
-                            str="F00" + std::to_string(speed);
-                            return str;
-                      - script.wait: UART_CMD 
-                      - wait_until:
-                          condition:
-                            lambda: 'return (id(uart_send) == 0);'
-                          timeout: 100ms
-                      - if: 
-                          condition:
-                            lambda: 'return (id(debug).state != "OK");'
-                          then:
-                            - lambda: id(debug).publish_state("Pelletspeed change failed");  
-                    else: 
-                      - lambda: id(uart_send) = 4;
-                      - uart.write: "\x1bRD40005A&" #GET_PELLETSPEED
+                - lambda: id(uart_send) = 4;
+                - uart.write: "\x1bRD40005A&" #GET_PELLETSPEED
                 - wait_until:
                     condition:
                       lambda: 'return (id(uart_send) == 1);'
