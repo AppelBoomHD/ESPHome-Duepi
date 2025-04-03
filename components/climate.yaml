@@ -2,7 +2,7 @@ climate:
   - platform: thermostat
     name: "Pellet kachel"
     id: Stove
-    sensor: room_temp_stove
+    sensor: current_temperature
     min_idle_time: 1s
     min_heating_off_time: 1s
     min_heating_run_time: 300s
