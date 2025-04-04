@@ -69,5 +69,18 @@ sensor:
     device_class: "temperature"
     accuracy_decimals: 0
   - platform: homeassistant
-    id: current_temperature
+    id: hass_temperature
     entity_id: sensor.woonkamer_temperatuur
+  - platform: template
+    id: current_temperature
+    name: "current temperature"
+    lambda: |-
+      if (!isnan(id(hass_temperature).state)) {
+        return id(hass_temperature).state;
+      } else if (!isnan(id(room_temp_stove).state)) {
+        return id(room_temp_stove).state;
+      } else {
+        // Optional: return a default value if neither sensor is available
+        return 21.0; // Default temperature in °C
+      }
+    update_interval: 10s
