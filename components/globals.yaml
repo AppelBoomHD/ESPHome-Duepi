@@ -2,13 +2,12 @@ esphome:
   on_boot:
     - priority: -10
       then: 
-        - wait_until: api.connected
         - lambda: |- 
             if (isnan(id(current_temperature).state)) {
               ESP_LOGE("main", "current_temperature is unavailable! Entering deep sleep...");
-              id(deep_sleep_component).start();  // Enter deep sleep immediately
             } else {
               ESP_LOGI("main", "current_temperature is available. Proceeding...");
+              id(deep_sleep_component).prevent_deep_sleep();  // Prevent deep sleep
               id(uart_send) = 0;
               id(room_temp_stove).publish_state(17.0);
               id(power_level).publish_state(1);
@@ -23,7 +22,7 @@ esphome:
 
 deep_sleep:
   id: deep_sleep_component
-  run_duration: 10s  # Time the device stays awake to check the sensor
+  run_duration: 15s  # Time the device stays awake to check the sensor
   sleep_duration: 60s  # Time the device sleeps before waking up again
 
 # Define a runtime interval to continuously monitor the hass sensor's availability
@@ -31,9 +30,10 @@ interval:
   - interval: 30s  # Check every 30 seconds
     then:
       - lambda: |-
-          if (isnan(id(current_temperature).state)) {
+          if (!isnan(id(current_temperature).state)) {
+            id(deep_sleep_component).prevent_deep_sleep();  // Prevent deep sleep if the sensor is available
+          } else {
             ESP_LOGE("main", "current_temperature became unavailable! Entering deep sleep...");
-            id(deep_sleep_component).start();  // Enter deep sleep if the sensor becomes unavailable
           }
 
 api:
