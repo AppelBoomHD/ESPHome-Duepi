@@ -83,4 +83,4 @@ sensor:
         // Optional: return a default value if neither sensor is available
         return 21.0; // Default temperature in °C
       }
-    update_interval: 10s
+    update_interval: 1m
