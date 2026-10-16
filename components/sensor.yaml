@@ -16,7 +16,6 @@ sensor:
   - platform: template
     name: "exhaust fan speed"
     id: exh_fan_speed
-    device_class: "speed"
     unit_of_measurement: "RPM"
     accuracy_decimals: 0
     filters:
@@ -33,7 +32,6 @@ sensor:
     name: "pellet speed"
     id: pellet_speed
     accuracy_decimals: 0
-    device_class: "speed"
     filters:
       - round: 0
   - platform: template
@@ -43,7 +41,7 @@ sensor:
     filters:
       - round: 0
   - platform: template
-    name: "current temperature"
+    name: "current temperature surroundings"
     id: room_temp_stove
     unit_of_measurement: "°C"
     device_class: "temperature"
@@ -73,7 +71,7 @@ sensor:
     entity_id: sensor.woonkamer_temperatuur
   - platform: template
     id: current_temperature
-    name: "current temperature"
+    name: "current temperature woonkamer"
     lambda: |-
       if (!isnan(id(hass_temperature).state)) {
         return id(hass_temperature).state;
